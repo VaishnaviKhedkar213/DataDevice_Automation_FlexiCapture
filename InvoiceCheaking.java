@@ -4,6 +4,8 @@ import org.testng.annotations.Test;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.concurrent.TimeoutException;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
@@ -20,6 +22,7 @@ import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
 import java.io.File;
 import java.nio.file.Files;
+import java.util.List;
 
 public class InvoiceCheaking {
 
@@ -36,8 +39,9 @@ public class InvoiceCheaking {
     //============================================================
     @Test(priority = 1)
     public void loginTest() throws InterruptedException {
-        driver.get("https://afc5.datadevice.com.au/FlexiCapture12/Login/Trescon#/Login");
-        driver.findElement(By.id("userName")).sendKeys("Admin_Trescon");
+        //driver.get("https://afc5.datadevice.com.au/FlexiCapture12/Login/Trescon#/Login");
+    	 driver.get("https://afc5.datadevice.com.au/FlexiCapture12/Login/Trescon/#/Login");
+    	driver.findElement(By.id("userName")).sendKeys("Admin_Trescon");
         driver.findElement(By.id("password")).sendKeys("!o6jRZ@R");
         driver.findElement(By.id("loginButton")).click();
         System.out.println("=========== Login Successfully ==============\n");
@@ -320,6 +324,7 @@ public class InvoiceCheaking {
         }
     }
 
+    //cancle
     public void hoverAndClickKebab() {
         try {
             System.out.println("--- Attempting to click kebab menu ---");
@@ -386,6 +391,7 @@ public class InvoiceCheaking {
     }
 
 
+    //cancle
     public void clickUpdateDocumentDefinition() {
         try {
             System.out.println("--- Attempting to click 'Update document definition' option ---");
@@ -436,7 +442,7 @@ public class InvoiceCheaking {
             System.out.println("❌ Failed to click 'Update document definition': " + e.getMessage());
         }
     }
-    
+    //cancle
     public void clickRecognize() {
         try {
             System.out.println("--- Attempting to click RECOGNIZE button ---");
@@ -467,7 +473,7 @@ public class InvoiceCheaking {
         }
     }
 
-  
+  //cancle
     public void waitForRecognitionToComplete() {
     	    try {
     	        System.out.println("⏳ Waiting 30 seconds for recognition to complete...");
@@ -609,7 +615,7 @@ public class InvoiceCheaking {
         return false; // No matching format found
     }
     
-    
+    //for 1.unknown
     public void handleUnknownToInvoiceAndRecognize() {
         try {
             System.out.println("🔍 Checking document type...");
@@ -745,9 +751,162 @@ public class InvoiceCheaking {
         System.out.println("❌ Page merge check failed: " + e.getMessage());
     }
 }
+ public void printAllErrorOptionsWithCount() {
+
+	    List<WebElement> options = driver.findElements(
+	        By.xpath("//div[contains(@class,'errorsWrapper')]//div[@title]")
+	    );
+
+	    System.out.println("📊 Total error options found: " + options.size());
+
+	    for (WebElement option : options) {
+	        String title = option.getAttribute("title");
+	        System.out.println("• " + title);
+	    }
+	}
+public void ensureRedErrorFlagSelected() {
+
+	    List<WebElement> flags = driver.findElements(
+	        By.xpath("//div[@title='Errors' and contains(@class,'item')]")
+	    );
+
+	    if (flags.isEmpty()) {
+	        System.out.println("✓ No Red Error flag present");
+	        return;
+	    }
+
+	    WebElement redFlag = flags.get(0);
+
+	    if (!redFlag.getAttribute("class").contains("selected")) {
+	        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", redFlag);
+	        System.out.println("✓ Red Error flag clicked");
+	    } else {
+	        System.out.println("✓ Red Error flag already selected");
+	    }
+	}
+
+public void printRedErrorList() {
+
+	    try {
+	        WebElement errorList = new WebDriverWait(driver, Duration.ofSeconds(10))
+	            .until(ExpectedConditions.visibilityOfElementLocated(
+	                By.id("form-errors-list")
+	            ));
+
+	        // ✅ ONLY red errors
+	        List<WebElement> redErrors = errorList.findElements(
+	            By.xpath(".//div[contains(@class,'itemContainer') and contains(@class,'error-')]")
+	        );
+
+	        System.out.println("\n📌 CURRENT RED ERROR LIST:");
+	        System.out.println("📊 Total red errors: " + redErrors.size());
+
+	        if (redErrors.isEmpty()) {
+	            System.out.println("✓ No red errors present");
+	            return;
+	        }
+
+	        int index = 1;
+	        for (WebElement err : redErrors) {
+
+	            WebElement body = err.findElement(
+	                By.xpath(".//div[contains(@class,'body-')]")
+	            );
+
+	            String text = (String) ((JavascriptExecutor) driver)
+	                .executeScript("return arguments[0].textContent.trim();", body);
+
+	            System.out.println(index++ + ". " + text);
+	        }
+
+	    } catch (Exception e) {
+	        System.out.println("❌ Failed to read red errors: " + e.getMessage());
+	    }
+	}
 
 
-    public void clickReject() {
+public void clickAllErrorsAndValidate() {
+
+    try {
+        WebElement errorList = wait.until(
+            ExpectedConditions.visibilityOfElementLocated(
+                By.id("form-errors-list")
+            )
+        );
+
+        List<WebElement> redErrors = errorList.findElements(
+            By.xpath(".//div[contains(@class,'itemContainer') and contains(@class,'error-')]")
+        );
+
+        System.out.println("\n📌 Total Red Errors Found: " + redErrors.size());
+
+        int index = 1;
+
+        for (WebElement err : redErrors) {
+
+            WebElement body = err.findElement(
+                By.xpath(".//div[contains(@class,'body-')]")
+            );
+
+            String errorText = (String) ((JavascriptExecutor) driver)
+                    .executeScript("return arguments[0].textContent.trim();", body);
+
+            System.out.println("\n➡ Clicking Error " + index++ + ": " + errorText);
+
+            ((JavascriptExecutor) driver)
+                    .executeScript("arguments[0].click();", body);
+
+            Thread.sleep(1000);
+
+            // ✅ SMART FIELD NAME EXTRACTION
+            String fieldName = errorText
+                    .replaceAll("(Required.*|Date Format.*|Invalid.*)", "")
+                    .trim();
+
+            validateFieldDynamically(fieldName);
+        }
+
+    } catch (Exception e) {
+        System.out.println("❌ Error handling error list: " + e.getMessage());
+    }
+}
+
+
+
+public void validateFieldDynamically(String fieldName) {
+
+    try {
+        System.out.println("🔎 Validating field: " + fieldName);
+
+        WebElement fieldBox = wait.until(
+            ExpectedConditions.visibilityOfElementLocated(
+                By.xpath("//div[@data-fieldname='" + fieldName + "']//div[@contenteditable='true']")
+            )
+        );
+
+        ((JavascriptExecutor) driver)
+            .executeScript("arguments[0].style.border='3px solid red'", fieldBox);
+
+        Thread.sleep(500);
+
+        String value = ((JavascriptExecutor) driver)
+                .executeScript("return arguments[0].textContent.trim();", fieldBox)
+                .toString()
+                .replaceAll("[\\n\\r,]", "");
+
+        if (value.isEmpty()) {
+            System.out.println("❌ " + fieldName + " is BLANK");
+        } else {
+            System.out.println("✓ " + fieldName + " value: " + value);
+        }
+
+    } catch (Exception e) {
+        System.out.println("❌ Could not validate " + fieldName + ": " + e.getMessage());
+    }
+}
+
+
+	public void clickReject() {
         try {
             WebElement Reject = wait.until(
                 ExpectedConditions.elementToBeClickable(
@@ -788,15 +947,22 @@ public class InvoiceCheaking {
         readLocation();
         readInvoiceAmount();
         readGSTAmount();
-        hoverAndClickKebab();
-        clickUpdateDocumentDefinition();
-        clickRecognize();
-        waitForRecognitionToComplete();
-        System.out.println("--- Validations Complete ---\n");
+        // hoverAndClickKebab();
+        //clickUpdateDocumentDefinition();
+        //clickRecognize();
+        //waitForRecognitionToComplete();
+        //System.out.println("--- Validations Complete ---\n");
         clickServiceFields();
         readReceivedDate();
-        handleUnknownToInvoiceAndRecognize();//check
-        checkAndMergeSeparatedInvoicePages();//check
+        //handleUnknownToInvoiceAndRecognize();//check for 1.unknown
+        checkAndMergeSeparatedInvoicePages();//check merge or not
+        
+        printAllErrorOptionsWithCount();
+        ensureRedErrorFlagSelected();
+        printRedErrorList();
+        clickAllErrorsAndValidate();
+        
+
         clickReject();
        confirmReject();
     }
@@ -822,7 +988,11 @@ public class InvoiceCheaking {
     @AfterClass
     public void tearDown() {
         // Uncomment to close browser after tests
-          driver.quit();
+         // driver.quit();
     }
 }
+//batch open
+//warning msg /error msg locate ...count / name present
+//rule error check clicked or unclicked
+//if clicked print the list ..if unclicked - clicked and print the list
 
